@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Quizzes — QuizMaster{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <h1>Choose Your Quiz</h1>
+    <p>Select a category and difficulty level to begin. Each quiz has 10 questions with 30 seconds per question.</p>
+    <p class="page-sub-link">Or try the <a href="{{ url_for('quiz.suggest_page') }}">Topic Suggester</a> to pick your own topic.</p>
+</section>
+
+{% if not current_user.is_authenticated %}
+<div class="alert alert-info">
+    Please <a href="{{ url_for('auth.login') }}">log in</a> or
+    <a href="{{ url_for('auth.register') }}">register</a> to take a quiz.
+</div>
+{% endif %}
+
+<div class="quiz-grid">
+    {% for category in categories %}
+    <div class="quiz-category-card">
+        <div class="category-header">
+            <h2>{{ category.name }}</h2>
+            {% if category.description %}
+            <p class="category-desc">{{ category.description }}</p>
+            {% endif %}
+        </div>
+        <div class="difficulty-buttons">
+            {% for diff in difficulties %}
+            {% set count = question_counts[category.id][diff] %}
+            {% if current_user.is_authenticated %}
+            <a href="{{ url_for('quiz.start_quiz', category_id=category.id, difficulty=diff) }}"
+               class="btn btn-difficulty btn-{{ diff }}">
+                <span class="diff-label">{{ diff|capitalize }}</span>
+            </a>
+            {% elif not current_user.is_authenticated %}
+            <a href="{{ url_for('auth.login', next=url_for('quiz.list_quizzes')) }}"
+               class="btn btn-difficulty btn-{{ diff }}">
+                <span class="diff-label">{{ diff|capitalize }}</span>
+            </a>
+            {% else %}
+            <span class="btn btn-difficulty btn-{{ diff }} disabled"
+                  title="No questions available">
+                <span class="diff-label">{{ diff|capitalize }}</span>
+            </span>
+            {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+    <p class="empty-state">No quiz categories available yet. Run the seed script to populate questions.</p>
+    {% endfor %}
+</div>
+{% endblock %}
