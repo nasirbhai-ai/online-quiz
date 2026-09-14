@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Quiz Result — QuizMaster{% endblock %}
+
+{% block content %}
+<section class="result-page">
+    <div class="result-card">
+        <div class="result-score-circle {% if score.percentage >= 80 %}excellent{% elif score.percentage >= 60 %}good{% else %}needs-work{% endif %}">
+            <span class="score-value">{{ score.percentage|int }}%</span>
+            <span class="score-label">Score</span>
+        </div>
+
+        <h1>
+            {% if score.percentage >= 80 %}
+                Excellent Work!
+            {% elif score.percentage >= 60 %}
+                Good Job!
+            {% else %}
+                Keep Practicing!
+            {% endif %}
+        </h1>
+
+        <div class="result-details">
+            <div class="result-stat">
+                <span class="stat-value">{{ score.correct_answers }}</span>
+                <span class="stat-label">Correct</span>
+            </div>
+            <div class="result-stat">
+                <span class="stat-value">{{ score.total_questions - score.correct_answers }}</span>
+                <span class="stat-label">Wrong</span>
+            </div>
+            <div class="result-stat">
+                <span class="stat-value">{{ score.total_questions }}</span>
+                <span class="stat-label">Total</span>
+            </div>
+            <div class="result-stat">
+                <span class="stat-value">{{ score.time_taken }}s</span>
+                <span class="stat-label">Time</span>
+            </div>
+        </div>
+
+        <div class="result-meta">
+            <span class="badge badge-category">{{ score.category.name }}</span>
+            <span class="badge badge-{{ score.difficulty }}">{{ score.difficulty|capitalize }}</span>
+        </div>
+
+        <div class="result-actions">
+            <a href="{{ url_for('quiz.list_quizzes') }}" class="btn btn-primary">Take Another Quiz</a>
+            <a href="{{ url_for('main.leaderboard') }}" class="btn btn-outline">View Leaderboard</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Topic Suggestions — QuizMaster{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <h1>Topic Question Suggester</h1>
+    <p>Choose any topic and the platform will suggest new MCQ questions for you.</p>
+</section>
+
+<div class="suggest-layout">
+    <!-- Topic selection panel -->
+    <div class="suggest-panel">
+        <h2>Choose a Topic</h2>
+        <p class="panel-desc">Pick a suggested topic or type your own.</p>
+
+        <form id="suggestForm" class="suggest-form">
+            <div class="form-group">
+                <label for="topicInput">Topic</label>
+                <input type="text" id="topicInput" name="topic" required
+                       placeholder="e.g. Space, Cricket, Python..." list="topicSuggestions">
+                <datalist id="topicSuggestions">
+                    {% for topic in suggested_topics %}
+                    <option value="{{ topic }}">
+                    {% endfor %}
+                </datalist>
+            </div>
+
+            <div class="topic-chips" id="topicChips">
+                {% for topic in suggested_topics %}
+                <button type="button" class="topic-chip" data-topic="{{ topic }}">{{ topic }}</button>
+                {% endfor %}
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="difficultySelect">Difficulty</label>
+                    <select id="difficultySelect" name="difficulty">
+                        <option value="easy">Easy</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="hard">Hard</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="countInput">Questions</label>
+                    <input type="number" id="countInput" name="count" value="5" min="1" max="15">
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block" id="suggestBtn">
+                Suggest Questions
+            </button>
+        </form>
+
+        <div id="suggestStatus" class="suggest-status" hidden></div>
+    </div>
+
+    <!-- Results panel -->
+    <div class="suggest-results">
+        <div class="results-header">
+            <h2>Suggested Questions</h2>
+            <span id="resultMeta" class="result-meta"></span>
+        </div>
+
+        <div id="resultsEmpty" class="empty-state">
+            <p>Select a topic and click <strong>Suggest Questions</strong> to see AI-powered suggestions here.</p>
+        </div>
+
+        <div id="resultsList" class="results-list" hidden></div>
+
+        {% if current_user.is_authenticated %}
+        <div id="quizActionBar" class="quiz-action-bar" hidden>
+            <button type="button" class="btn btn-success" id="startTopicQuizBtn">
+                Take Quiz with These Questions
+            </button>
+        </div>
+        {% else %}
+        <div class="alert alert-info" id="loginHint">
+            <a href="{{ url_for('auth.login', next=url_for('quiz.suggest_page')) }}">Log in</a>
+            to save questions or take a quiz with suggestions.
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    window.SUGGEST_CONFIG = {
+        isLoggedIn: {{ 'true' if current_user.is_authenticated else 'false' }},
+        startQuizUrl: "{{ url_for('quiz.start_topic_quiz') }}",
+        saveQuestionUrl: "{{ url_for('api.save_suggested_question') }}"
+    };
+</script>
+<script src="{{ url_for('static', filename='js/suggest.js') }}"></script>
+{% endblock %}

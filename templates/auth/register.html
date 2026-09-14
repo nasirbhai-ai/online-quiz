@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Register — QuizMaster{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <h1>Create Account</h1>
+        <p class="auth-subtitle">Join QuizMaster and start competing today.</p>
+
+        <form method="POST" action="{{ url_for('auth.register') }}" class="auth-form">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required
+                       placeholder="3-20 characters" autocomplete="username"
+                       pattern="[a-zA-Z0-9_]{3,20}">
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required
+                       placeholder="you@example.com" autocomplete="email">
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required
+                       placeholder="At least 6 characters" autocomplete="new-password"
+                       minlength="6">
+            </div>
+            <div class="form-group">
+                <label for="confirm_password">Confirm Password</label>
+                <input type="password" id="confirm_password" name="confirm_password" required
+                       placeholder="Repeat your password" autocomplete="new-password">
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Create Account</button>
+        </form>
+
+        <div style="margin-top: 15px;">
+            <a href="{{ url_for('auth.guest_login') }}" class="btn btn-outline btn-block" style="text-align: center; display: block; box-sizing: border-box;">Continue as Guest</a>
+        </div>
+
+        <p class="auth-footer">
+            Already have an account? <a href="{{ url_for('auth.login') }}">Log in here</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

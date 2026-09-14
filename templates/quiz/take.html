@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}{{ category_name }} Quiz — QuizMaster{% endblock %}
+
+{% block content %}
+<section class="quiz-header">
+    <div class="quiz-meta">
+        <span class="badge badge-category">{{ category_name }}</span>
+        <span class="badge badge-{{ difficulty }}">{{ difficulty|capitalize }}</span>
+    </div>
+    <div class="quiz-progress-bar">
+        <div class="progress-info">
+            <span>Question <span id="currentQuestion">1</span> of {{ total_questions }}</span>
+            <span class="timer" id="timer">{{ seconds_per_question }}</span>
+        </div>
+        <div class="progress-track">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+    </div>
+</section>
+
+<div id="quizContainer" class="quiz-container">
+    <!-- Questions rendered by JavaScript -->
+</div>
+
+<div class="quiz-actions">
+    <button id="prevBtn" class="btn btn-outline" disabled>Previous</button>
+    <button id="nextBtn" class="btn btn-primary">Next</button>
+    <button id="submitBtn" class="btn btn-success" style="display:none;">Submit Quiz</button>
+</div>
+
+<!-- Hidden data for JS -->
+<script id="quizData" type="application/json">
+{{ {"questions": questions, "secondsPerQuestion": seconds_per_question}|tojson }}
+</script>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/quiz.js') }}"></script>
+{% endblock %}

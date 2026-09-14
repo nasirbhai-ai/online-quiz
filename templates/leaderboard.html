@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Leaderboard — QuizMaster{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <h1>🏆 Leaderboard</h1>
+    <p>Top performers across all quiz categories.</p>
+</section>
+
+<div class="leaderboard-grid">
+    <div class="leaderboard-section">
+        <h2>Top Scores</h2>
+        {% if top_scores %}
+        <table class="leaderboard-table">
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Player</th>
+                    <th>Category</th>
+                    <th>Difficulty</th>
+                    <th>Score</th>
+                    <th>Correct</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for score, user in top_scores %}
+                <tr class="{% if loop.index <= 3 %}rank-{{ loop.index }}{% endif %}">
+                    <td class="rank-cell">
+                        {% if loop.index == 1 %}🥇
+                        {% elif loop.index == 2 %}🥈
+                        {% elif loop.index == 3 %}🥉
+                        {% else %}{{ loop.index }}{% endif %}
+                    </td>
+                    <td><strong>{{ user.username }}</strong></td>
+                    <td>{{ score.category.name }}</td>
+                    <td><span class="badge badge-{{ score.difficulty }}">{{ score.difficulty|capitalize }}</span></td>
+                    <td class="score-cell">{{ score.percentage|int }}%</td>
+                    <td>{{ score.correct_answers }}/{{ score.total_questions }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="empty-state">No scores yet. Be the first to take a quiz!</p>
+        {% endif %}
+    </div>
+
+    <div class="leaderboard-section">
+        <h2>Recent Activity</h2>
+        {% if recent_scores %}
+        <ul class="activity-list">
+            {% for score in recent_scores %}
+            <li class="activity-item">
+                <span class="activity-user">{{ score.user.username }}</span>
+                scored <strong>{{ score.percentage|int }}%</strong>
+                on <em>{{ score.category.name }}</em>
+                ({{ score.difficulty }})
+                <span class="activity-time">{{ score.correct_answers }}/{{ score.total_questions }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="empty-state">No recent activity.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
