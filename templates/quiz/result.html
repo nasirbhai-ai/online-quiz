@@ -44,10 +44,123 @@
             <span class="badge badge-{{ score.difficulty }}">{{ score.difficulty|capitalize }}</span>
         </div>
 
-        <div class="result-actions">
+        <div id="detailedResultsContainer" class="detailed-results-container" style="display:none; margin-top: 40px; text-align: left; width: 100%;">
+            <h3 style="margin-bottom: 20px; text-align: center;">Detailed Review</h3>
+            <div id="detailedResultsList" style="display: flex; flex-direction: column; gap: 15px;"></div>
+        </div>
+
+        <div class="result-actions" style="margin-top: 30px;">
             <a href="{{ url_for('quiz.list_quizzes') }}" class="btn btn-primary">Take Another Quiz</a>
             <a href="{{ url_for('main.leaderboard') }}" class="btn btn-outline">View Leaderboard</a>
         </div>
     </div>
 </section>
+{% endblock %}
+
+{% block extra_scripts %}
+<style>
+    .review-card {
+        padding: 15px 20px;
+        border-radius: 8px;
+        border-left: 6px solid;
+        background-color: var(--bg-card, #ffffff);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        color: var(--text-main, #333);
+        text-align: left;
+    }
+    @media (prefers-color-scheme: dark) {
+        .review-card {
+            background-color: #2a2a2a;
+            color: #eaeaea;
+        }
+    }
+    .status-correct {
+        border-left-color: #28a745;
+        background-color: rgba(40, 167, 69, 0.08);
+    }
+    .status-wrong {
+        border-left-color: #dc3545;
+        background-color: rgba(220, 53, 69, 0.08);
+    }
+    .status-not-attempted {
+        border-left-color: #6c757d;
+        background-color: rgba(108, 117, 125, 0.08);
+    }
+    .review-question {
+        font-weight: 600;
+        margin-bottom: 12px;
+        font-size: 1.1rem;
+        line-height: 1.4;
+    }
+    .review-answers {
+        margin-bottom: 12px;
+        font-size: 1rem;
+        line-height: 1.5;
+    }
+    .review-answers div {
+        margin-bottom: 6px;
+    }
+    .review-status {
+        font-weight: 700;
+        font-size: 1rem;
+    }
+</style>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const resultsData = sessionStorage.getItem('quizResults');
+    if (resultsData) {
+        try {
+            const results = JSON.parse(resultsData);
+            const container = document.getElementById('detailedResultsContainer');
+            const list = document.getElementById('detailedResultsList');
+            
+            if (results && results.length > 0) {
+                container.style.display = 'block';
+                let html = '';
+                
+                results.forEach((res, index) => {
+                    const qNum = index + 1;
+                    let statusText, statusClass;
+                    let userAnswer = res.user_answer;
+                    
+                    if (userAnswer === "—" || userAnswer === "") {
+                        statusText = "⚪ Not Attempted";
+                        statusClass = "status-not-attempted";
+                        userAnswer = "None";
+                    } else if (res.is_correct) {
+                        statusText = "✅ Correct";
+                        statusClass = "status-correct";
+                    } else {
+                        statusText = "❌ Wrong";
+                        statusClass = "status-wrong";
+                    }
+                    
+                    // Default to letter if text not found, but it should be found in options
+                    const userAnsText = (userAnswer !== "None" && res.options && res.options[userAnswer]) 
+                                            ? res.options[userAnswer] 
+                                            : userAnswer;
+                    const correctAnsText = (res.options && res.options[res.correct_answer]) 
+                                            ? res.options[res.correct_answer] 
+                                            : res.correct_answer;
+                    
+                    html += `
+                        <div class="review-card ${statusClass}">
+                            <div class="review-question">Question ${qNum}: ${res.text}</div>
+                            <div class="review-answers">
+                                <div><strong>Your Answer:</strong> ${userAnsText}</div>
+                                <div><strong>Correct Answer:</strong> ${correctAnsText}</div>
+                            </div>
+                            <div class="review-status"><strong>Status:</strong> ${statusText}</div>
+                        </div>
+                    `;
+                });
+                
+                list.innerHTML = html;
+            }
+        } catch(e) {
+            console.error("Error parsing detailed results", e);
+        }
+    }
+});
+</script>
 {% endblock %}

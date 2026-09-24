@@ -175,6 +175,11 @@
                 submitBtn.textContent = 'Submit Quiz';
                 return;
             }
+            
+            // Save detailed results for the result page
+            if (result.results) {
+                sessionStorage.setItem('quizResults', JSON.stringify(result.results));
+            }
 
             window.location.href = result.redirect;
         } catch (err) {

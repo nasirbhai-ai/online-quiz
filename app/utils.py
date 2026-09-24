@@ -60,6 +60,9 @@ def get_quiz_questions(category_id: int, difficulty: str, limit: int = None):
                     )
                     db.session.add(new_q)
                     questions.append(new_q)
+                else:
+                    if existing not in questions:
+                        questions.append(existing)
             db.session.commit()
 
     return questions[:limit]
