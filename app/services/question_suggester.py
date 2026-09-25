@@ -394,7 +394,7 @@ def _match_local_bank(topic: str) -> Optional[str]:
 
 
 def generate_local_questions(topic: str, difficulty: str, count: int) -> List[dict]:
-    """Generate questions from the local bank or topic templates."""
+    """Generate questions from the local bank."""
     bank_key = _match_local_bank(topic)
     questions = []
 
@@ -407,67 +407,7 @@ def generate_local_questions(topic: str, difficulty: str, count: int) -> List[di
             pool = LOCAL_QUESTION_BANK[bank_key]
         questions = random.sample(pool, min(count, len(pool)))
 
-    # Fill remaining with dynamic topic-based templates
-    while len(questions) < count:
-        idx = len(questions) + 1
-        questions.append(_build_template_question(topic, difficulty, idx))
-
     return [{**q, "source": "local"} for q in questions[:count]]
-
-
-def _build_template_question(topic: str, difficulty: str, index: int) -> dict:
-    """Build a contextual template question for any custom topic."""
-    templates = {
-        "easy": [
-            f"Which of the following is most closely associated with {topic}?",
-            f"What is a basic fact about {topic}?",
-            f"Which term is commonly used in the field of {topic}?",
-            f"Who is a well-known figure in {topic}?",
-            f"What is the primary equipment or tool used in {topic}?",
-            f"Where did {topic} originate?",
-        ],
-        "medium": [
-            f"Which statement about {topic} is correct?",
-            f"What is an important concept in {topic}?",
-            f"Which example best relates to {topic}?",
-            f"What is a major rule or principle of {topic}?",
-            f"How is scoring or success typically measured in {topic}?",
-        ],
-        "hard": [
-            f"Which advanced principle applies to {topic}?",
-            f"What is a challenging aspect of studying {topic}?",
-            f"Which expert-level fact is true about {topic}?",
-            f"What was a significant historical turning point for {topic}?",
-            f"Which obscure detail is associated with {topic}?",
-        ],
-    }
-
-    base_text = random.choice(templates.get(difficulty, templates["medium"]))
-    text = f"{base_text} (Q{index})"
-    
-    correct_text = f"A valid fact about {topic} (Fact {index})"
-    opts_list = [
-        correct_text,
-        f"A common misconception about {topic} (Alt {index}A)",
-        f"An unrelated concept to {topic} (Alt {index}B)",
-        f"An incorrect statement about {topic} (Alt {index}C)",
-    ]
-    random.shuffle(opts_list)
-    options = {
-        "A": opts_list[0],
-        "B": opts_list[1],
-        "C": opts_list[2],
-        "D": opts_list[3],
-    }
-
-    correct_letter = ["A", "B", "C", "D"][opts_list.index(correct_text)]
-
-    return {
-        "text": text,
-        "options": options,
-        "correct_option": correct_letter,
-        "difficulty": difficulty,
-    }
 
 
 def suggest_questions(topic: str, difficulty: str = "medium", count: int = 5) -> dict:
@@ -484,7 +424,7 @@ def suggest_questions(topic: str, difficulty: str = "medium", count: int = 5) ->
     if difficulty not in ("easy", "medium", "hard"):
         difficulty = "medium"
 
-    count = max(1, min(count, 15))
+    count = 10  # Enforce requirement: fetch exactly 10 questions
 
     questions = fetch_from_opentdb(topic, difficulty, count)
     source = "opentdb" if questions else "local"
@@ -494,6 +434,12 @@ def suggest_questions(topic: str, difficulty: str = "medium", count: int = 5) ->
         questions.extend(local)
         if source == "opentdb" and local:
             source = "mixed"
+
+    if len(questions) < count:
+        return {
+            "error": f"Could not find enough real questions for topic '{topic}' and difficulty '{difficulty}'. Please try another topic.",
+            "questions": []
+        }
 
     return {
         "topic": topic,

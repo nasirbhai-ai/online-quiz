@@ -37,7 +37,7 @@ def suggest_questions_api():
 
     topic = (data.get("topic") or "").strip()
     difficulty = (data.get("difficulty") or "medium").lower()
-    count = data.get("count", current_app.config.get("QUESTIONS_PER_QUIZ", 5))
+    count = data.get("count", current_app.config.get("QUESTIONS_PER_QUIZ", 10))
 
     if not topic:
         return jsonify({"error": "Please provide a topic."}), 400

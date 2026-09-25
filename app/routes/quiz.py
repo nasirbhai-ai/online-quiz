@@ -106,7 +106,7 @@ def list_quizzes():
         categories=categories,
         difficulties=DIFFICULTIES,
         question_counts=question_counts,
-        max_questions=current_app.config.get("QUESTIONS_PER_QUIZ", 5),
+        max_questions=current_app.config.get("QUESTIONS_PER_QUIZ", 10),
     )
 
 
@@ -123,7 +123,7 @@ def start_quiz(category_id, difficulty):
         flash("Category not found.", "danger")
         return redirect(url_for("quiz.list_quizzes"))
 
-    limit = current_app.config.get("QUESTIONS_PER_QUIZ", 5)
+    limit = current_app.config.get("QUESTIONS_PER_QUIZ", 10)
     questions = get_quiz_questions(category_id, difficulty, limit)
 
     if not questions:

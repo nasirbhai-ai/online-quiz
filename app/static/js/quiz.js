@@ -208,5 +208,5 @@
 
     // Initialize
     renderQuestions();
-    resetTimer();
+    showQuestion(0);
 })();
