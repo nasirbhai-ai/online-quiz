@@ -416,89 +416,97 @@ def generate_local_questions(topic: str, difficulty: str, count: int) -> List[di
 
 def generate_wikipedia_questions(topic: str, difficulty: str, count: int) -> list:
     """Generate basic fallback questions from Wikipedia summaries."""
-    search_url = f"https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={topic}&utf8=&format=json&srlimit=1"
-    headers = {'User-Agent': 'QuizApp/1.0'}
-    
-    try:
-        search_res = requests.get(search_url, headers=headers, timeout=5).json()
-        search_results = search_res.get("query", {}).get("search", [])
-        if not search_results:
-            return []
-        title = search_results[0]["title"]
-    except Exception:
-        return []
-
-    extract_url = f"https://en.wikipedia.org/w/api.php?action=query&prop=extracts&exlimit=1&titles={title}&explaintext=1&format=json"
-    try:
-        extract_res = requests.get(extract_url, headers=headers, timeout=5).json()
-        pages = extract_res.get("query", {}).get("pages", {})
-        page = list(pages.values())[0]
-        text = page.get("extract", "")
-        if not text:
-            return []
-    except Exception:
-        return []
-
-    text = re.sub(r'==.*?==', '', text)
-    text = re.sub(r'\n+', ' ', text)
-    sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', text) if 5 < len(s.split()) < 30]
-
     questions = []
-    all_words = []
-    for s in sentences:
-        words = [w for w in re.findall(r'\b[A-Z][a-z]+\b|\b\d{2,}\b', s) if len(w) > 3]
-        all_words.extend(words)
-    all_words = list(set(all_words))
-
-    random.shuffle(sentences)
     
-    for s in sentences:
+    # Try the specific topic first, then broad ones to ensure we get enough questions
+    topics_to_try = [topic, "History", "Science", "Technology", "General knowledge"]
+    
+    for current_topic in topics_to_try:
         if len(questions) >= count:
             break
             
-        words = s.split()
-        candidates = []
-        for i, w in enumerate(words):
-            if i == 0: continue
-            clean_w = re.sub(r'[^\w]', '', w)
-            if (clean_w.istitle() and clean_w.isalpha() and len(clean_w) > 3) or (clean_w.isdigit() and len(clean_w) >= 2):
-                candidates.append((i, clean_w))
-                
-        if candidates:
-            idx, ans = random.choice(candidates)
-            q_words = words[:]
-            q_words[idx] = "_____"
-            q_text = " ".join(q_words)
-            
-            distractors = [w for w in all_words if w != ans and (w.isdigit() == ans.isdigit())]
-            generic_distractors = ["None", "Unknown", "Not specified", "Various", "Multiple", "One", "Two", "Three"]
-            if ans.isdigit():
-                generic_distractors = [str(int(ans) + random.randint(1, 10)) for _ in range(3)]
-                
-            for gd in generic_distractors:
-                if len(distractors) >= 3: break
-                if gd not in distractors and gd != ans:
-                    distractors.append(gd)
-                    
-            if len(distractors) < 3:
+        search_url = f"https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={current_topic}&utf8=&format=json&srlimit=1"
+        headers = {'User-Agent': 'QuizApp/1.0'}
+        
+        try:
+            search_res = requests.get(search_url, headers=headers, timeout=5).json()
+            search_results = search_res.get("query", {}).get("search", [])
+            if not search_results:
                 continue
+            title = search_results[0]["title"]
+        except Exception:
+            continue
+
+        extract_url = f"https://en.wikipedia.org/w/api.php?action=query&prop=extracts&exlimit=1&titles={title}&explaintext=1&format=json"
+        try:
+            extract_res = requests.get(extract_url, headers=headers, timeout=5).json()
+            pages = extract_res.get("query", {}).get("pages", {})
+            page = list(pages.values())[0]
+            text = page.get("extract", "")
+            if not text:
+                continue
+        except Exception:
+            continue
+
+        text = re.sub(r'==.*?==', '', text)
+        text = re.sub(r'\n+', ' ', text)
+        sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', text) if 5 < len(s.split()) < 30]
+
+        all_words = []
+        for s in sentences:
+            words = [w for w in re.findall(r'\b[A-Z][a-z]+\b|\b\d{2,}\b', s) if len(w) > 3]
+            all_words.extend(words)
+        all_words = list(set(all_words))
+
+        random.shuffle(sentences)
+        
+        for s in sentences:
+            if len(questions) >= count:
+                break
                 
-            wrong_opts = random.sample(distractors, 3)
-            options_list = [ans] + wrong_opts
-            random.shuffle(options_list)
-            
-            letters = ["A", "B", "C", "D"]
-            opts_dict = {letters[i]: options_list[i] for i in range(4)}
-            correct_letter = letters[options_list.index(ans)]
-            
-            questions.append({
-                "text": f"According to Wikipedia ({title}): {q_text}",
-                "options": opts_dict,
-                "correct_option": correct_letter,
-                "difficulty": difficulty,
-                "source": "backend_generation"
-            })
-            
+            words = s.split()
+            candidates = []
+            for i, w in enumerate(words):
+                if i == 0: continue
+                clean_w = re.sub(r'[^\w]', '', w)
+                if (clean_w.istitle() and clean_w.isalpha() and len(clean_w) > 3) or (clean_w.isdigit() and len(clean_w) >= 2):
+                    candidates.append((i, clean_w))
+                    
+            if candidates:
+                idx, ans = random.choice(candidates)
+                q_words = words[:]
+                q_words[idx] = "_____"
+                q_text = " ".join(q_words)
+                
+                distractors = [w for w in all_words if w != ans and (w.isdigit() == ans.isdigit())]
+                generic_distractors = ["None", "Unknown", "Not specified", "Various", "Multiple", "One", "Two", "Three"]
+                if ans.isdigit():
+                    generic_distractors = [str(int(ans) + random.randint(1, 10)) for _ in range(3)]
+                    
+                for gd in generic_distractors:
+                    if len(distractors) >= 3: break
+                    if gd not in distractors and gd != ans:
+                        distractors.append(gd)
+                        
+                if len(distractors) < 3:
+                    continue
+                    
+                wrong_opts = random.sample(distractors, 3)
+                options_list = [ans] + wrong_opts
+                random.shuffle(options_list)
+                
+                letters = ["A", "B", "C", "D"]
+                opts_dict = {letters[i]: options_list[i] for i in range(4)}
+                correct_letter = letters[options_list.index(ans)]
+                
+                questions.append({
+                    "text": f"According to Wikipedia ({title}): {q_text}",
+                    "options": opts_dict,
+                    "correct_option": correct_letter,
+                    "difficulty": difficulty,
+                    "source": "backend_generation"
+                })
+                
     return questions
 
 def suggest_questions(topic: str, difficulty: str = "medium", count: int = 5) -> dict:
@@ -533,22 +541,6 @@ def suggest_questions(topic: str, difficulty: str = "medium", count: int = 5) ->
             source = "mixed"
         elif not questions and wiki_questions:
             source = "wikipedia"
-
-    if len(questions) < count:
-        # Fallback to generating very generic questions so we NEVER return an error for valid topics.
-        # But wait, Wikipedia API is robust enough. If even Wikipedia fails, just use extremely generic ones.
-        generic_qs = []
-        for i in range(count - len(questions)):
-            letters = ["A", "B", "C", "D"]
-            opts_dict = {"A": "Yes", "B": "No", "C": "Maybe", "D": "I don't know"}
-            generic_qs.append({
-                "text": f"Is {topic} a topic of interest?",
-                "options": opts_dict,
-                "correct_option": "A",
-                "difficulty": difficulty,
-                "source": "backend_generation"
-            })
-        questions.extend(generic_qs)
 
     return {
         "topic": topic,
